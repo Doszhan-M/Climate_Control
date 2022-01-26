@@ -1,0 +1,11 @@
+{ 
+   // - - - Настройки cSpell - - - - - - - - - - - - -
+   "cSpell.language": "en,ru",
+   "cSpell.ignoreWords": [
+       "ssid",
+       "deviceid",
+
+   ],
+
+"C_Cpp.errorSquiggles": "Disabled"
+}
