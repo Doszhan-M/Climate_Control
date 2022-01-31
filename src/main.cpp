@@ -5,8 +5,8 @@
 #include <WiFiClient.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include "LittleFS.h"
 
-#include "html.h"
 
 // настройки точки доступа
 const char *ssid = "actuator";            // имя точки доступа
@@ -48,10 +48,24 @@ void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
 
+  String ledState;
+  String processor(const String& var) {
+    if(var == "STATE"){
+      ledState = "ON";
+      return ledState;
+    }
+    return String();
+  }
+
 void setup()
 {
   Serial.begin(115200);            // Запуск последовательной связи
 
+  if(!LittleFS.begin()){
+    Serial.println("Error while mounting LittleFS");
+    return;
+  }
+  
   WiFi.softAP(ssid, password);     // WiFi.softAP используется для запуска режима AP NodeMCU.
   Serial.print("Access Point:");   // Выводим информацию через последовательный монитор
   Serial.println(ssid);            // Сообщаем пользователю имя WiFi, установленное NodeMCU
@@ -80,12 +94,13 @@ void setup()
   restclient.begin(client, url);         // инициализация http клиента
 
   //SERVER BLOCK
-  // URL для корневой страницы веб-сервера:
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html);
+    request->send(LittleFS, "/index.html", String(), false, processor);
   });
 
-  // Send a GET request to <ESP_IP>/get?input1=<inputMessage>
+  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "/style.css", "text/css");
+  });
   // server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
   //   String inputMessage;
   //   String inputParam;
@@ -115,10 +130,9 @@ void setup()
   // });
   server.onNotFound(notFound);
   server.begin();
+  //END SERVER BLOCK
 
-
-
-  delay(5000);                           // для стабильности 
+  // delay(5000);                           // для стабильности 
 }
 
 void close_valve () {

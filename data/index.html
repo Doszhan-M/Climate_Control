@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html>
+
+    <head>
+        <title>Climate Control Center</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+
+    <body class="flex_center">
+        <header class="flex_center">
+            <h1>Climate Control Center</h1>
+        </header>
+
+       
+        <div class="main-content">
+
+            <div class="status">
+                <p>VALVE STATUS: <strong> %STATE%</strong></p>
+            </div>
+
+            <div class="circle_block">
+                <div class="temp_circle flex_center">
+                    24.5 C
+                </div>
+                <div class="temp_circle flex_center">
+                    54.5 %
+                </div>
+            </div>
+            <div>
+                <form action="/get" class="temp_form">
+                    <div>MAX temperature: </div>
+                    <div><input type="text" name="max_temp"></div>
+                    <div><input type="submit" value="SET" class="btn"></div>  
+                </form><br>
+        
+                <form action="/get" class="temp_form">
+                    <div>MIN temperature: </div>
+                    <div><input type="text" name="min_temp"></div>
+                    <div><input type="submit" value="SET" class="btn"></div>  
+                </form><br>
+            </div>
+            <div class="manual flex_center">
+                <div>Manual control</div>
+                <div class="circle_block">
+                    <button class="flex_center on_btn">OPEN</button>
+                    <button class="flex_center off_btn">CLOSE</button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="flex_center">
+            2022
+        </footer>
+    </body>
+
+</html>
