@@ -16,15 +16,15 @@
         <div class="main-content">
 
             <div class="status">
-                <p>VALVE STATUS: <strong> %STATE%</strong></p>
+                <p>VALVE STATE: <strong> %STATE%</strong></p>
             </div>
 
             <div class="circle_block">
                 <div class="temp_circle flex_center">
-                    24.5 C
+                    <span id="temperature">%TEMPERATURE%</span>
                 </div>
                 <div class="temp_circle flex_center">
-                    54.5 %
+                    <span id="humidity">%HUMIDITY%</span>
                 </div>
             </div>
             <div>
@@ -41,7 +41,10 @@
                 </form><br>
             </div>
             <div class="manual flex_center">
-                <div>Manual control</div>
+                <div class="circle_block">
+                    <div>Manual control</div>
+                    <div class="manual_control"></div>
+                </div>
                 <div class="circle_block">
                     <button class="flex_center on_btn">OPEN</button>
                     <button class="flex_center off_btn">CLOSE</button>
@@ -52,6 +55,7 @@
         <footer class="flex_center">
             2022
         </footer>
+        <script src="index.js"></script>
     </body>
 
 </html>

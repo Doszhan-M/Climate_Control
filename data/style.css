@@ -21,7 +21,7 @@ header {
     height: 50px;
     width: 100%;
     background-color: blueviolet;
-    margin-bottom: 10%;
+    margin-bottom: 5%;
     color: aquamarine;
 }
 footer {
@@ -108,3 +108,50 @@ input {
 .status strong {
     color: red;
 }
+
+button:active{
+    transform: scale(1.1);
+    background: linear-gradient(#f59500, #f5ae00) #f59500
+}
+
+input:active{
+    transform: scale(1.1);
+    background: linear-gradient(#f59500, #f5ae00) #f59500
+}
+
+
+.manual_control {
+    display: inline-block;
+    width: 62px;  
+    height: 24px;  
+    border-radius: 12px;  
+    background: #bfb9b9;  
+    z-index: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition-duration: 300ms;  
+  }
+  .manual_control::after {
+    content: "";
+    height: 35.7px;  
+    width: 35.7px;  
+    border-radius: 18px;  
+    background: #fff;  
+    top: -6px;  
+    left: -6px;  
+    transition-duration: 300ms;  
+    box-shadow: 0 0 10px 0 #9a9595;  
+    position: absolute;
+    z-index: 1;
+  }
+  .manual_control_on {
+    background: #f9f6f6;
+    box-shadow: inset 0 0 10px 0 #948e8e; /* тень */
+  }
+  .manual_control_on::after {
+    left: 30px;
+    background: #04ce69;
+  }

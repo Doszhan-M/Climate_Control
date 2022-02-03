@@ -27,6 +27,7 @@ int max_temp = 26;
 int min_temp = 25;
 
 bool valve_is_opened = true;
+String valveState = "OPEN";
 
 DHT dht(DHT_PIN, DHT_TYPE);       // обьявляем объект dht, указывать тип и дата пин 
 WiFiClient client;                // объявить объект класса wifi
@@ -48,14 +49,21 @@ void notFound(AsyncWebServerRequest *request) {
   request->send(404, "text/plain", "Not found");
 }
 
-  String ledState;
-  String processor(const String& var) {
-    if(var == "STATE"){
-      ledState = "ON";
-      return ledState;
-    }
-    return String();
+String getTemperature() {
+  float temperature = dht.readTemperature();
+  Serial.println(temperature);
+  return String(temperature);
+}
+
+String processor(const String& var) {
+  if(var == "STATE"){
+    return valveState;
+   }
+  else if (var == "TEMPERATURE"){
+    return getTemperature();
   }
+  return String();
+}
 
 void setup()
 {
@@ -101,6 +109,14 @@ void setup()
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(LittleFS, "/style.css", "text/css");
   });
+
+  server.on("/index.js", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(LittleFS, "index.js", "text/js");
+  });
+
+  server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", getTemperature().c_str());
+  });
   // server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
   //   String inputMessage;
   //   String inputParam;
@@ -132,7 +148,7 @@ void setup()
   server.begin();
   //END SERVER BLOCK
 
-  // delay(5000);                           // для стабильности 
+  delay(1000);                           // для стабильности 
 }
 
 void close_valve () {
