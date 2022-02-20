@@ -21,7 +21,7 @@ setInterval(function () {
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("state").innerHTML = this.responseText;
+      document.getElementById("humidity").innerHTML = this.responseText;
       console.log('get_humidity')
     }
   };
@@ -33,7 +33,7 @@ setInterval(function () {
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("humidity").innerHTML = this.responseText;
+      document.getElementById("state").innerHTML = this.responseText;
       console.log('get_valve_state')
     }
   };
