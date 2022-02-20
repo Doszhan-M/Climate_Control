@@ -12,6 +12,9 @@
 #include <FS.h>
 #include "LittleFS.h"
 
+//настройки таймера задержки
+unsigned long lastTime = 0;
+unsigned long timerDelay = 5000; // 5 seconds (5000)
 
 // Конфигурация WIFI подключения
 const char* wifi_ssid = "ASUS_ROUTER";
@@ -32,43 +35,23 @@ AsyncWebServer server(80);          // объявить объект класс�
 
 // Переменные
 String valveState = "OPEN";
+int max_temp = 26;
+int min_temp = 25;
+const char* max_temp_file = "/max.cfg";   // файл для хранения настроек
+const char* min_temp_file = "/min.cfg";   // файл для хранения настроек
+const char* input_max_temp = "max_temp";
+const char* input_min_temp = "min_temp";
 
 
-//настройки таймера задержки
-unsigned long lastTime = 0;
-unsigned long timerDelay = 5000; // 5 seconds (5000)
-
-
-// Функции для http сервера ----------------
-void notFound(AsyncWebServerRequest *request) {
-  request->send(404, "text/plain", "Not found");
-}
-
-String getTemperature() {
-  delay(dht.getMinimumSamplingPeriod());
-  float temperature = dht.readTemperature();
-  return String(temperature, 1);
-}
-
-String getHumidity() {
-  delay(dht.getMinimumSamplingPeriod());
-  float temperature = dht.readHumidity();
-  return String(temperature, 1);
-}
-
-String processor(const String& var) {
-  if(var == "STATE"){
-    return valveState;
-   }
-  else if (var == "TEMPERATURE"){
-    return getTemperature();
-  }
-  else if (var == "HUMIDITY"){
-    return getHumidity();
-  }
-  return String();
-}
-// -----------------------------------------
+// объявление функции
+void notFound(AsyncWebServerRequest *request);
+String getTemperature();
+String getHumidity();
+String processor(const String& var);
+String get_max_temp();
+String get_min_temp();
+String readFile(fs::FS &fs, const char * path);
+void writeFile(fs::FS &fs, const char * path, const char * message);
 
 
 void setup() {
@@ -79,6 +62,13 @@ void setup() {
   pinMode (DHT_VCC, OUTPUT);       // D6 пин в режиме выхода 
   digitalWrite (DHT_VCC, HIGH);    // подать напряжение 3,3V на D6 пин
   dht.begin();
+  // -------------------------------------------------------------------
+
+  // Работа файловой системы -----------------------------------------
+  if(!LittleFS.begin()){
+    Serial.println("Error while mounting LittleFS");
+    return;
+  }
   // -------------------------------------------------------------------
 
   // Подключение к wifi сети --------------------------------------------
@@ -107,14 +97,6 @@ void setup() {
   Serial.println(WiFi.softAPIP()); // IP-адрес NodeMCU можно получить, вызвав WiFi.softAPIP ()
   // -------------------------------------------------------------------
 
-
-  // Проверка файловой системы -----------------------------------------
-  if(!LittleFS.begin()){
-    Serial.println("Error while mounting LittleFS");
-    return;
-  }
-  // -------------------------------------------------------------------
-
   // Эндпойнты web сервера ----------------------------------------------
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(LittleFS, "/index.html", String(), false, processor);
@@ -140,6 +122,26 @@ void setup() {
     request->send_P(200, "text/plain", getHumidity().c_str());
   });
 
+  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String inputMessage;
+
+    if (request->hasParam(input_max_temp)) {
+      inputMessage = request->getParam(input_max_temp)->value();
+      writeFile(LittleFS, max_temp_file, inputMessage.c_str());
+      delay(15);
+      max_temp = get_max_temp().toInt();
+      Serial.println(max_temp);
+    };
+
+    if (request->hasParam(input_min_temp)) {
+      inputMessage = request->getParam(input_min_temp)->value();
+      writeFile(LittleFS, min_temp_file, inputMessage.c_str());
+      delay(15);
+      min_temp = get_min_temp().toInt();
+      Serial.println(min_temp);
+    };
+
+  });
   server.onNotFound(notFound);
   server.begin();
 }
@@ -148,3 +150,85 @@ void setup() {
 void loop() {
 
 }
+
+
+// Функции для http сервера ----------------
+void notFound(AsyncWebServerRequest *request) {
+  request->send(404, "text/plain", "Not found");
+}
+
+String get_max_temp() {
+  String value = readFile(LittleFS, max_temp_file);
+  int max = value.toInt();
+  return String(max);
+};
+
+String get_min_temp() {
+  String value = readFile(LittleFS, min_temp_file);
+  int min = value.toInt();
+  return String(min);
+};
+
+String getTemperature() {
+  delay(dht.getMinimumSamplingPeriod());
+  float temperature = dht.readTemperature();
+  return String(temperature, 1);
+}
+
+String getHumidity() {
+  delay(dht.getMinimumSamplingPeriod());
+  float humidity = dht.readHumidity();
+  return String(humidity, 1);
+}
+
+String processor(const String& var) {
+  if(var == "STATE"){
+    return valveState;
+   }
+  else if (var == "TEMPERATURE"){
+    return getTemperature();
+  }
+  else if (var == "HUMIDITY"){
+    return getHumidity();
+  }
+  else if (var == "MAX_TEMP"){
+    return get_max_temp();
+  }
+  else if (var == "MIN_TEMP"){
+    return get_min_temp();
+  }
+  return String();
+}
+// -----------------------------------------
+
+// записать настройки в пзу память 
+void writeFile(fs::FS &fs, const char * path, const char * message){
+  Serial.printf("Writing file: %s\r\n", path);
+  File file = fs.open(path, "w");
+  if(!file){
+    Serial.println("- failed to open file for writing");
+    return;
+  }
+  if(file.print(message)){
+    Serial.println("- file written");
+  } else {
+    Serial.println("- write failed");
+  }
+};
+
+
+// считать настройки из пзу 
+String readFile(fs::FS &fs, const char * path){
+  Serial.printf("Reading file: %s\r\n", path);
+  File file = fs.open(path, "r");
+  if(!file || file.isDirectory()){
+    Serial.println("- empty file or failed to open file");
+    return String();
+  }
+  Serial.println("- read from file:");
+  String fileContent;
+  while(file.available()){
+    fileContent+=String((char)file.read());
+  }
+  return fileContent;
+};

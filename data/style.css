@@ -41,22 +41,31 @@ footer {
     justify-content: center;
     align-items: center;
 }
-.temp_form div {
+.temp_form_max div {
     margin-bottom: 1%;
     font-size: 22px;
-    font-weight: 500;
+    font-weight: 600;
+    color: red;
 }
+
+.temp_form_min div {
+    margin-bottom: 1%;
+    font-size: 22px;
+    font-weight: 600;
+    color: blue;
+}
+
 .btn {
     background-color: rgb(243, 228, 17);
     border-radius: 10%;
     height: 30px;
-    width: 150px;
+    width: 100px;
 }
 input {
     text-align: center;
     border-radius: 10%;
     height: 20px;
-    width: 150px;
+    width: 100px;
 }
 .circle_block {
     width: 100%;
@@ -65,6 +74,13 @@ input {
     align-items: center;
     margin-bottom: 7%;
 }
+.manual_block {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 4%;
+}
 .temp_circle {
     background-color: blueviolet;            
     border-radius: 50%;
@@ -72,6 +88,10 @@ input {
     width: 150px;
     font-size: 35px;
     font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
 }
 .on_btn {
     border: black solid;
@@ -93,7 +113,7 @@ input {
 }
 .manual {
     width: 100%;            
-    font-size: 35px;
+    font-size: 30px;
     font-weight: 600;
 }
 .status {
@@ -154,4 +174,24 @@ input:active{
   .manual_control_on::after {
     left: 30px;
     background: #04ce69;
+  }
+
+  .set_settings {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-bottom: 7%;
+    margin-top: 8%;
+  }
+  
+  .set_settings form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .max_temp {
+      font-size: 20px;
+      font-weight: 600;
   }

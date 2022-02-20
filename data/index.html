@@ -20,32 +20,33 @@
             </div>
 
             <div class="circle_block">
-                <div class="temp_circle flex_center">
-                    <span id="temperature">%TEMPERATURE%&#176C</span>
+                <div class="temp_circle">
+                    <span id="temperature">%TEMPERATURE%</span><span>&#176C</span>
                 </div>
-                <div class="temp_circle flex_center">
-                    <span id="humidity">%HUMIDITY%%</span>
+                <div class="temp_circle">
+                    <span id="humidity">%HUMIDITY%</span><span>%</span>
                 </div>
             </div>
-            <div>
-                <form action="/get" class="temp_form">
-                    <div>MAX temperature: </div>
-                    <div><input type="text" name="max_temp"></div>
-                    <div><input type="submit" value="SET" class="btn"></div>  
-                </form><br>
+            
+            <div class="set_settings">
+                <form action="/get" class="temp_form_max">
+                    <div>MAXIMUM</div>
+                    <div><input type="text" class="max_temp" name="max_temp" value=%MAX_TEMP%&#176C></div>
+                    <div><input type="submit" value="SET" class="btn" onclick="submitMaximum()"></div>  
+                </form>
         
-                <form action="/get" class="temp_form">
-                    <div>MIN temperature: </div>
-                    <div><input type="text" name="min_temp"></div>
-                    <div><input type="submit" value="SET" class="btn"></div>  
-                </form><br>
+                <form action="/get" class="temp_form_min">
+                    <div>MINIMUM</div>
+                    <div><input type="text" class="max_temp" name="min_temp" value=%MIN_TEMP%&#176C></div>
+                    <div><input type="submit" value="SET" class="btn" onclick="submitMinimum()"></div>  
+                </form>
             </div>
             <div class="manual flex_center">
-                <div class="circle_block">
+                <div class="manual_block">
                     <div>Manual control</div>
                     <div class="manual_control"></div>
                 </div>
-                <div class="circle_block">
+                <div class="manual_block">
                     <button class="flex_center on_btn">OPEN</button>
                     <button class="flex_center off_btn">CLOSE</button>
                 </div>

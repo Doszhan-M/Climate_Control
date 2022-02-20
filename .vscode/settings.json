@@ -11,6 +11,19 @@
 
 "C_Cpp.errorSquiggles": "Disabled",
 "files.associations": {
-    "cmath": "cpp"
+    "cmath": "cpp",
+    "array": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "ranges": "cpp",
+    "typeinfo": "cpp",
+    "optional": "cpp",
+    "istream": "cpp",
+    "ostream": "cpp",
+    "system_error": "cpp",
+    "functional": "cpp",
+    "tuple": "cpp",
+    "type_traits": "cpp",
+    "utility": "cpp"
 }
 }

@@ -1,7 +1,7 @@
 let menuToggle = document.querySelector('.manual_control');
-
 menuToggle.onclick = function () {
   menuToggle.classList.toggle('manual_control_on')
+  alert("Control type changed!");
 }
 
 
@@ -28,3 +28,13 @@ setInterval(function () {
   xhttp.open("GET", "/get_humidity", true);
   xhttp.send();
 }, 20000);
+
+
+function submitMinimum() {
+  alert("Minimum value saved");
+  setTimeout(function(){ document.location.reload(false); }, 500);
+};
+function submitMaximum() {
+  alert("Maximum value saved");
+  setTimeout(function(){ document.location.reload(false); }, 500);
+};

@@ -119,32 +119,32 @@ void setup()
   //   request->send_P(200, "text/plain", getTemperature().c_str());
   // });
   
-  // server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
-  //   String inputMessage;
-  //   String inputParam;
-  //   // GET input1 value on <ESP_IP>/get?input1=<inputMessage>
-  //   if (request->hasParam(PARAM_INPUT_1)) {
-  //     inputMessage = request->getParam(PARAM_INPUT_1)->value();
-  //     inputParam = PARAM_INPUT_1;
-  //   }
-  //   // GET input2 value on <ESP_IP>/get?input2=<inputMessage>
-  //   else if (request->hasParam(PARAM_INPUT_2)) {
-  //     inputMessage = request->getParam(PARAM_INPUT_2)->value();
-  //     inputParam = PARAM_INPUT_2;
-  //   }
-  //   // GET input3 value on <ESP_IP>/get?input3=<inputMessage>
-  //   else if (request->hasParam(PARAM_INPUT_3)) {
-  //     inputMessage = request->getParam(PARAM_INPUT_3)->value();
-  //     inputParam = PARAM_INPUT_3;
-  //   }
-  //   else {
-  //     inputMessage = "No message sent";
-  //     inputParam = "none";
-  //   }
-  //   Serial.println(inputMessage);
-  //   request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
-  //                                    + inputParam + ") with value: " + inputMessage +
-  //                                    "<br><a href=\"/\">Return to Home Page</a>");
+  server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    String inputMessage;
+    String inputParam;
+    // GET input1 value on <ESP_IP>/get?input1=<inputMessage>
+    if (request->hasParam(PARAM_INPUT_1)) {
+      inputMessage = request->getParam(PARAM_INPUT_1)->value();
+      inputParam = PARAM_INPUT_1;
+    }
+    // GET input2 value on <ESP_IP>/get?input2=<inputMessage>
+    else if (request->hasParam(PARAM_INPUT_2)) {
+      inputMessage = request->getParam(PARAM_INPUT_2)->value();
+      inputParam = PARAM_INPUT_2;
+    }
+    // GET input3 value on <ESP_IP>/get?input3=<inputMessage>
+    else if (request->hasParam(PARAM_INPUT_3)) {
+      inputMessage = request->getParam(PARAM_INPUT_3)->value();
+      inputParam = PARAM_INPUT_3;
+    }
+    else {
+      inputMessage = "No message sent";
+      inputParam = "none";
+    }
+    Serial.println(inputMessage);
+    request->send(200, "text/html", "HTTP GET request sent to your ESP on input field (" 
+                                     + inputParam + ") with value: " + inputMessage +
+                                     "<br><a href=\"/\">Return to Home Page</a>");
   // });
   server.onNotFound(notFound);
   server.begin();
