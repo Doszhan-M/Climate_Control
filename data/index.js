@@ -21,11 +21,23 @@ setInterval(function () {
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("humidity").innerHTML = this.responseText;
+      document.getElementById("state").innerHTML = this.responseText;
       console.log('get_humidity')
     }
   };
   xhttp.open("GET", "/get_humidity", true);
+  xhttp.send();
+}, 20000);
+
+setInterval(function () {
+  let xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("humidity").innerHTML = this.responseText;
+      console.log('get_valve_state')
+    }
+  };
+  xhttp.open("GET", "/get_valve_state", true);
   xhttp.send();
 }, 20000);
 

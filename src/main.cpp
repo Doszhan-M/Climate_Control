@@ -34,19 +34,20 @@ AsyncWebServer server(80);          // объявить объект класс�
 
 
 // Переменные
-String valveState = "OPEN";
-int max_temp = 26;
-int min_temp = 25;
+String valveState = "OPEN";               // статус клапана для отабражения в html
+int max_temp = 26;                        // уставка для макс температуры
+int min_temp = 25;                        // уставка для мин температуры
 const char* max_temp_file = "/max.cfg";   // файл для хранения настроек
 const char* min_temp_file = "/min.cfg";   // файл для хранения настроек
-const char* input_max_temp = "max_temp";
-const char* input_min_temp = "min_temp";
+const char* input_max_temp = "max_temp";  // name в html форме
+const char* input_min_temp = "min_temp";  // name в html форме
 
 
 // объявление функции
 void notFound(AsyncWebServerRequest *request);
 String getTemperature();
 String getHumidity();
+String getValveState();
 String processor(const String& var);
 String get_max_temp();
 String get_min_temp();
@@ -55,6 +56,7 @@ void writeFile(fs::FS &fs, const char * path, const char * message);
 
 
 void setup() {
+
   Serial.begin(115200);
 
   // Старт датчика DHT22 ----------------------------------------------
@@ -122,6 +124,10 @@ void setup() {
     request->send_P(200, "text/plain", getHumidity().c_str());
   });
 
+  server.on("/get_valve_state", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send_P(200, "text/plain", getValveState().c_str());
+  });
+
   server.on("/get", HTTP_GET, [] (AsyncWebServerRequest *request) {
     String inputMessage;
 
@@ -173,17 +179,21 @@ String getTemperature() {
   delay(dht.getMinimumSamplingPeriod());
   float temperature = dht.readTemperature();
   return String(temperature, 1);
-}
+};
 
 String getHumidity() {
   delay(dht.getMinimumSamplingPeriod());
   float humidity = dht.readHumidity();
   return String(humidity, 1);
-}
+};
+
+String getValveState() {
+  return valveState;
+};
 
 String processor(const String& var) {
   if(var == "STATE"){
-    return valveState;
+    return getValveState();
    }
   else if (var == "TEMPERATURE"){
     return getTemperature();
@@ -215,7 +225,6 @@ void writeFile(fs::FS &fs, const char * path, const char * message){
     Serial.println("- write failed");
   }
 };
-
 
 // считать настройки из пзу 
 String readFile(fs::FS &fs, const char * path){
