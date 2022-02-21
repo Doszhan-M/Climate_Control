@@ -14,7 +14,7 @@
 
 //настройки таймера задержки
 unsigned long lastTime = 0;
-unsigned long timerDelay = 5000; // 5 seconds (5000)
+unsigned long timerDelay = 10000; // 5 seconds (5000)
 
 // Конфигурация WIFI подключения
 const char* wifi_ssid = "ASUS_ROUTER";
@@ -24,16 +24,21 @@ const char* wifi_password = "aSus2020";
 const char *ssid = "actuator";            
 const char *password = "64(Me4J6#C!gZfj"; 
 
+// url sonoff
+const char *url = "http://192.168.4.2:8081/zeroconf/switch";
+
 // ----------------------- ПИНЫ ---------------------------
 #define DHT_VCC D6                // питание датчика DHT22
 #define DHT_PIN D5                // дата линия датчика DHT22
 
 
 DHT dht(DHT_PIN, DHT_MODEL_DHT22);  // обьявляем объект класса dht
+WiFiClient client;                  // объявить объект класса wifi
 AsyncWebServer server(80);          // объявить объект класса http сервера
-
+HTTPClient restclient;              // объявить объект класса rest клиента
 
 // Переменные
+bool valve_is_opened = true;
 String valveState = "OPEN";               // статус клапана для отабражения в html
 int max_temp = 26;                        // уставка для макс температуры
 int min_temp = 25;                        // уставка для мин температуры
@@ -53,8 +58,11 @@ String get_max_temp();
 String get_min_temp();
 String readFile(fs::FS &fs, const char * path);
 void writeFile(fs::FS &fs, const char * path, const char * message);
+void open_valve ();
+void close_valve ();
 
 
+// ------------------------------------------------------------------------------------------------------------------------
 void setup() {
 
   Serial.begin(115200);
@@ -97,6 +105,10 @@ void setup() {
   Serial.println(ssid);            // Сообщаем пользователю имя WiFi, установленное NodeMCU
   Serial.print("IP-адрес:");       // И IP-адрес NodeMCU
   Serial.println(WiFi.softAPIP()); // IP-адрес NodeMCU можно получить, вызвав WiFi.softAPIP ()
+  // -------------------------------------------------------------------
+  
+  // Инициализация http клиента ----------------------------------------
+  restclient.begin(client, url);         
   // -------------------------------------------------------------------
 
   // Эндпойнты web сервера ----------------------------------------------
@@ -151,11 +163,75 @@ void setup() {
   server.onNotFound(notFound);
   server.begin();
 }
+// ------------------------------------------------------------------------------------------------------------------------
  
 
 void loop() {
 
+  if ((millis() - lastTime) > timerDelay)                                              // вместо delay()
+  {
+    float temperature = dht.readTemperature();                                         // считать температуру
+    Serial.print("Temperature: "); Serial.println(temperature);
+    
+
+    if (temperature > max_temp && valve_is_opened) {
+        close_valve();
+    } 
+    if (temperature < min_temp && !valve_is_opened) {
+        open_valve();
+    }
+
+    lastTime = millis();
+  }
+  
 }
+
+// ------------------------------------------------------------------------------------------------------------------------
+
+// функции управления реле
+void close_valve () {
+  // отправить запрос на включение реле
+  restclient.addHeader("Content-Type", "application/json");                                  // header
+  String RequestData = "{\"deviceid\":\"1000b91ec6\",\"data\":{\"switch\": \"on\"}}";        // payload
+  int ResponseStatusCode = restclient.POST(RequestData);                                     // post запрос
+  if (ResponseStatusCode == 200)
+    {
+      Serial.print("Relay has been switched on! Status: ");
+      Serial.println(ResponseStatusCode);
+      Serial.println("Valve has been closed: ");
+      /* запрос с проверкой не нужно делать, если пришел ответ 200, значит sonoff
+       ответил и выполнил задание, поэтому сразу valve_is_opened можно менять */
+      valve_is_opened = false;
+      valveState = "CLOSED";  
+      String payload = restclient.getString();
+      Serial.println(payload);
+    }
+    else
+    {
+      Serial.print("Error! StatusCode code: ");
+      Serial.println(ResponseStatusCode);
+    }
+};
+
+void open_valve () {
+  // отправить запрос на выключение реле
+  restclient.addHeader("Content-Type", "application/json");                                  // header
+  String RequestData = "{\"deviceid\":\"1000b91ec6\",\"data\":{\"switch\": \"off\"}}"; // payload
+  int ResponseStatusCode = restclient.POST(RequestData);                                     // post запрос
+  if (ResponseStatusCode == 200)
+    {
+      Serial.print("Relay has been switched off! Status: ");
+      Serial.println(ResponseStatusCode);
+      Serial.println("Valve has been opened: ");
+      valve_is_opened = true;
+      valveState = "OPEN";  
+    }
+    else
+    {
+      Serial.print("Error! HTTP Response code: ");
+      Serial.println(ResponseStatusCode);
+    }
+};
 
 
 // Функции для http сервера ----------------

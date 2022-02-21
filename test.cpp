@@ -155,6 +155,7 @@ void setup()
 
 void close_valve () {
   // отправить запрос на включение реле
+  Serial.println("close_valve"");
   restclient.addHeader("Content-Type", "application/json");                                  // header
   String RequestData = "{\"deviceid\":\"1000b91ec6\",\"data\":{\"switch\": \"on\"}}"; // payload
   int ResponseStatusCode = restclient.POST(RequestData);                                     // post запрос
@@ -170,7 +171,7 @@ void close_valve () {
       Serial.print("Error! HTTP Response code: ");
       Serial.println(ResponseStatusCode);
     }
-}
+};
 
 void open_valve () {
   // отправить запрос на выключение реле
@@ -189,23 +190,25 @@ void open_valve () {
       Serial.print("Error! HTTP Response code: ");
       Serial.println(ResponseStatusCode);
     }
-}
+};
 
 void loop()
 {
-  if ((millis() - lastTime) > timerDelay)                                              // задержка
+  if ((millis() - lastTime) > timerDelay)                                              // вместо delay()
   {
+
     float temperature = dht.readTemperature();                                         // считать температуру
     Serial.print("Temperature: "); Serial.println(temperature);
+    
+    close_valve();
 
-    if (temperature > max_temp && valve_is_opened) {
-        close_valve();
-    } 
-    if (temperature < min_temp && !valve_is_opened) {
-        open_valve();
-    }
+    // if (temperature > max_temp && valve_is_opened) {
+    // } 
+    // if (temperature < min_temp && !valve_is_opened) {
+    //     open_valve();
+    // }
 
-    restclient.end(); // Free resources
+    restclient.end();                                                                  // Free resources
     lastTime = millis();
   }
 }
