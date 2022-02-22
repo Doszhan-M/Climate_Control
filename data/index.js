@@ -1,8 +1,47 @@
-let menuToggle = document.querySelector('.manual_control');
-menuToggle.onclick = function () {
-  menuToggle.classList.toggle('manual_control_on')
-  alert("Control type changed!");
+const manualToggle = () => {
+
+  let menuToggle = document.querySelector('.manual_control');
+  menuToggle.onclick = function () {
+
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        console.log(this.responseText);
+
+        if (this.responseText == "OFF") {
+          menuToggle.classList.add('manual_control_on');
+          fetch('/manual_control_on')
+        };
+
+        if (this.responseText == "ON") {
+          menuToggle.classList.remove('manual_control_on');
+          fetch('/manual_control_off')
+        };
+      };
+    };
+    xhttp.open("GET", "/manual_control_state", true);
+    xhttp.send();
+  }
 }
+
+const manualOn = () => {
+  let xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      console.log(this.responseText);
+      let menuToggle = document.querySelector('.manual_control');
+      if (this.responseText == "ON") {
+        menuToggle.classList.add('manual_control_on');
+        alert("Manual control active!");
+      }
+    };
+  };
+  xhttp.open("GET", "/manual_control_state", true);
+  xhttp.send();
+};
+
+manualOn()
+manualToggle()
 
 
 setInterval(function () {
@@ -44,9 +83,9 @@ setInterval(function () {
 
 function submitMinimum() {
   alert("Minimum value saved");
-  setTimeout(function(){ document.location.reload(false); }, 500);
+  setTimeout(function () { document.location.reload(false); }, 500);
 };
 function submitMaximum() {
   alert("Maximum value saved");
-  setTimeout(function(){ document.location.reload(false); }, 500);
+  setTimeout(function () { document.location.reload(false); }, 500);
 };
