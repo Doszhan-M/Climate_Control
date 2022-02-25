@@ -40,8 +40,48 @@ const manualOn = () => {
   xhttp.send();
 };
 
-manualOn()
-manualToggle()
+const openValve = () => {
+  let openBtn = document.querySelector('.on_btn');
+  let valveState = document.getElementById('state');
+
+  openBtn.onclick = function () {
+
+    valveState.innerHTML = "IN PROGRESS";
+
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        console.log(this.responseText);
+      };
+    };
+    xhttp.open("GET", "/open_valve", true);
+    xhttp.send();
+  };
+};
+
+const closeValve = () => {
+  let openBtn = document.querySelector('.off_btn');
+  let valveState = document.getElementById('state');
+
+  openBtn.onclick = function () {
+
+    valveState.innerHTML = "IN PROGRESS";
+
+    let xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        console.log(this.responseText);
+      };
+    };
+    xhttp.open("GET", "/close_valve", true);
+    xhttp.send();
+  };
+};
+
+openValve();
+closeValve();
+manualOn();
+manualToggle();
 
 
 setInterval(function () {

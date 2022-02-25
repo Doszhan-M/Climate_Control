@@ -38,6 +38,8 @@ HTTPClient restclient;             // объявить объект класса
 
 // Переменные
 String manual_control = "OFF";
+String manual_valve_target = "neutral";
+
 bool valve_is_opened = true;
 String valveState = "OPEN";              // статус клапана для отабражения в html
 int max_temp = 26;                       // уставка для макс температуры
@@ -61,6 +63,8 @@ String readFile(fs::FS &fs, const char *path);
 void writeFile(fs::FS &fs, const char *path, const char *message);
 void open_valve();
 void close_valve();
+String manualOpenValve();
+String manualCLoseValve();
 
 // ------------------------------------------------------------------------------------------------------------------------
 void setup()
@@ -145,6 +149,12 @@ void setup()
   server.on("/manual_control_off", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", manualControlOff().c_str()); });
 
+  server.on("/open_valve", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", manualOpenValve().c_str()); });
+
+  server.on("/close_valve", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", manualCLoseValve().c_str()); });
+
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
               String inputMessage;
@@ -195,6 +205,13 @@ void loop()
     else
     {
       Serial.println("manual_control on");
+
+      if (manual_valve_target == "OPEN" && !valve_is_opened) {
+        open_valve();
+      }
+      if (manual_valve_target == "CLOSE" && valve_is_opened) {
+        close_valve();
+      }
     };
 
     lastTime = millis();
@@ -214,7 +231,7 @@ void close_valve()
   {
     Serial.print("Relay has been switched on! Status: ");
     Serial.println(ResponseStatusCode);
-    Serial.println("Valve has been closed: ");
+    Serial.println("Valve has been closed");
     /* запрос с проверкой не нужно делать, если пришел ответ 200, значит sonoff
      ответил и выполнил задание, поэтому сразу valve_is_opened можно менять */
     valve_is_opened = false;
@@ -239,7 +256,7 @@ void open_valve()
   {
     Serial.print("Relay has been switched off! Status: ");
     Serial.println(ResponseStatusCode);
-    Serial.println("Valve has been opened: ");
+    Serial.println("Valve has been opened");
     valve_is_opened = true;
     valveState = "OPEN";
   }
@@ -298,7 +315,18 @@ String manualControlOn()
 String manualControlOff()
 {
   manual_control = "OFF";
+  manual_valve_target = "neutral";
   return manual_control;
+};
+
+String manualOpenValve() {
+  manual_valve_target = "OPEN";
+  return manual_valve_target;
+};
+
+String manualCLoseValve() {
+  manual_valve_target = "CLOSE";
+  return manual_valve_target;
 };
 
 String processor(const String &var)
