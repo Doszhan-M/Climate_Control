@@ -41,40 +41,45 @@ const manualOn = () => {
 };
 
 const openValve = () => {
+  let menuToggle = document.querySelector('.manual_control');
   let openBtn = document.querySelector('.on_btn');
   let valveState = document.getElementById('state');
 
   openBtn.onclick = function () {
+    if (menuToggle.classList.contains('manual_control_on')) {
+      valveState.innerHTML = "IN PROGRESS";
 
-    valveState.innerHTML = "IN PROGRESS";
-
-    let xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        console.log(this.responseText);
+      let xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          console.log(this.responseText);
+        };
       };
-    };
-    xhttp.open("GET", "/open_valve", true);
-    xhttp.send();
+      xhttp.open("GET", "/open_valve", true);
+      xhttp.send();
+    }
+
   };
 };
 
 const closeValve = () => {
+  let menuToggle = document.querySelector('.manual_control');
   let openBtn = document.querySelector('.off_btn');
   let valveState = document.getElementById('state');
 
   openBtn.onclick = function () {
+    if (menuToggle.classList.contains('manual_control_on')) {
+      valveState.innerHTML = "IN PROGRESS";
 
-    valveState.innerHTML = "IN PROGRESS";
-
-    let xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        console.log(this.responseText);
+      let xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+          console.log(this.responseText);
+        };
       };
-    };
-    xhttp.open("GET", "/close_valve", true);
-    xhttp.send();
+      xhttp.open("GET", "/close_valve", true);
+      xhttp.send();
+    }
   };
 };
 
