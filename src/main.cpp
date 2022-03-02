@@ -30,6 +30,7 @@ const char *url = "http://192.168.4.2:8081/zeroconf/switch";
 // ----------------------- ПИНЫ ---------------------------
 #define DHT_VCC D6 // питание датчика DHT22
 #define DHT_PIN D5 // дата линия датчика DHT22
+#define DS_PIN D4 // питание датчика DS1307
 
 DHT dht(DHT_PIN, DHT_MODEL_DHT22); // обьявляем объект класса dht
 WiFiClient client;                 // объявить объект класса wifi
@@ -73,6 +74,9 @@ void setup()
   Serial.begin(115200);
 
   // Старт датчика DHT22 ----------------------------------------------
+  pinMode(DS_PIN, OUTPUT);     // D4 пин в режиме входа
+  digitalWrite(DS_PIN, LOW); // подать напряжение 3,3V на D6 пин
+
   pinMode(DHT_PIN, INPUT);     // D5 пин в режиме входа
   pinMode(DHT_VCC, OUTPUT);    // D6 пин в режиме выхода
   digitalWrite(DHT_VCC, HIGH); // подать напряжение 3,3V на D6 пин
