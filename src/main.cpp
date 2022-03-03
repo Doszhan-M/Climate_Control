@@ -12,9 +12,15 @@
 #include <FS.h>
 #include "LittleFS.h"
 
+#include <Wire.h>
+#include <ErriezDS1307.h>
+
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+
 //настройки таймера задержки
 unsigned long lastTime = 0;
-unsigned long timerDelay = 10000; // 5 seconds (5000)
+unsigned long timerDelay = 10000; // 5 seconds (10000)
 
 // Конфигурация WIFI подключения
 const char *wifi_ssid = "ASUS_ROUTER";
@@ -30,17 +36,19 @@ const char *url = "http://192.168.4.2:8081/zeroconf/switch";
 // ----------------------- ПИНЫ ---------------------------
 #define DHT_VCC D6 // питание датчика DHT22
 #define DHT_PIN D5 // дата линия датчика DHT22
-#define DS_PIN D4 // питание датчика DS1307
 
 DHT dht(DHT_PIN, DHT_MODEL_DHT22); // обьявляем объект класса dht
 WiFiClient client;                 // объявить объект класса wifi
 AsyncWebServer server(80);         // объявить объект класса http сервера
 HTTPClient restclient;             // объявить объект класса rest клиента
+ErriezDS1307 rtc;                  // объявить объект класса rtc времени
+WiFiUDP ntpUDP;                    // объявить объект класса ntp клиента
+NTPClient timeClient(ntpUDP);
 
 // Переменные
 String manual_control = "OFF";
 String manual_valve_target = "neutral";
-
+uint8_t wifiCount = 0;
 bool valve_is_opened = true;
 String valveState = "OPEN";              // статус клапана для отабражения в html
 int max_temp = 26;                       // уставка для макс температуры
@@ -66,6 +74,7 @@ void open_valve();
 void close_valve();
 String manualOpenValve();
 String manualCLoseValve();
+String showTime();
 
 // ------------------------------------------------------------------------------------------------------------------------
 void setup()
@@ -74,9 +83,6 @@ void setup()
   Serial.begin(115200);
 
   // Старт датчика DHT22 ----------------------------------------------
-  pinMode(DS_PIN, OUTPUT);     // D4 пин в режиме входа
-  digitalWrite(DS_PIN, LOW); // подать напряжение 3,3V на D6 пин
-
   pinMode(DHT_PIN, INPUT);     // D5 пин в режиме входа
   pinMode(DHT_VCC, OUTPUT);    // D6 пин в режиме выхода
   digitalWrite(DHT_VCC, HIGH); // подать напряжение 3,3V на D6 пин
@@ -95,19 +101,54 @@ void setup()
   WiFi.begin(wifi_ssid, wifi_password);
   Serial.println(".");
   Serial.println("WIFI connecting");
-  while (WiFi.status() != WL_CONNECTED)
+  while (wifiCount < 40)
   {
-    delay(500);
-    Serial.print(".");
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      delay(500);
+      Serial.print(".");
+      wifiCount++;
+    }
+    else
+    {
+      wifiCount = 41;
+    }
   }
   if (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
-    Serial.println("WiFi Failed!");
-    return;
+    Serial.print("WiFi Failed!");
   }
   Serial.println("");
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
+  // -------------------------------------------------------------------
+
+  // Настройка NTP клиента для синхронизации времени по интернету--------
+  timeClient.begin();
+  timeClient.setTimeOffset(21600); // GMT +6
+  timeClient.update();
+  // -------------------------------------------------------------------
+
+  // Старт датчика DS1307; ----------------------------------------------
+  Wire.begin();
+  Wire.setClock(100000);
+  Serial.println(F("\nInitializing DS1307"));
+
+  while (!rtc.begin()) // Initialize RTC
+  {
+    Serial.println(F("RTC not found"));
+  }
+
+  if (timeClient.getEpochTime() != 21603) // если получено время из интернета
+  {
+    if (rtc.getEpoch() != timeClient.getEpochTime()) // если время на часах отличается от NTP
+    {
+      if (!rtc.setEpoch(timeClient.getEpochTime())) // установить время из NTP клиента
+      {
+        Serial.println(F("Error: RTC write failed"));
+      };
+    }
+  }
   // -------------------------------------------------------------------
 
   // Точка доступа для sonoff --------------------------------------------
@@ -144,6 +185,9 @@ void setup()
   server.on("/get_valve_state", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", getValveState().c_str()); });
 
+  server.on("/get_datetime", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(200, "text/plain", showTime().c_str()); });
+
   server.on("/manual_control_state", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(200, "text/plain", manual_control.c_str()); });
 
@@ -161,25 +205,25 @@ void setup()
 
   server.on("/get", HTTP_GET, [](AsyncWebServerRequest *request)
             {
-              String inputMessage;
+    String inputMessage;
 
-              if (request->hasParam(input_max_temp))
-              {
-                inputMessage = request->getParam(input_max_temp)->value();
-                writeFile(LittleFS, max_temp_file, inputMessage.c_str());
-                delay(15);
-                max_temp = get_max_temp().toInt();
-                Serial.println(max_temp);
-              };
+    if (request->hasParam(input_max_temp))
+    {
+      inputMessage = request->getParam(input_max_temp)->value();
+      writeFile(LittleFS, max_temp_file, inputMessage.c_str());
+      delay(15);
+      max_temp = get_max_temp().toInt();
+      Serial.println(max_temp);
+    };
 
-              if (request->hasParam(input_min_temp))
-              {
-                inputMessage = request->getParam(input_min_temp)->value();
-                writeFile(LittleFS, min_temp_file, inputMessage.c_str());
-                delay(15);
-                min_temp = get_min_temp().toInt();
-                Serial.println(min_temp);
-              }; });
+    if (request->hasParam(input_min_temp))
+    {
+      inputMessage = request->getParam(input_min_temp)->value();
+      writeFile(LittleFS, min_temp_file, inputMessage.c_str());
+      delay(15);
+      min_temp = get_min_temp().toInt();
+      Serial.println(min_temp);
+    }; });
   server.onNotFound(notFound);
   server.begin();
 }
@@ -190,6 +234,8 @@ void loop()
 
   if ((millis() - lastTime) > timerDelay) // вместо delay()
   {
+    showTime();
+
     if (manual_control == "OFF")
     {
       float temperature = dht.readTemperature(); // считать температуру
@@ -210,10 +256,12 @@ void loop()
     {
       Serial.println("manual_control on");
 
-      if (manual_valve_target == "OPEN" && !valve_is_opened) {
+      if (manual_valve_target == "OPEN" && !valve_is_opened)
+      {
         open_valve();
       }
-      if (manual_valve_target == "CLOSE" && valve_is_opened) {
+      if (manual_valve_target == "CLOSE" && valve_is_opened)
+      {
         close_valve();
       }
     };
@@ -323,12 +371,14 @@ String manualControlOff()
   return manual_control;
 };
 
-String manualOpenValve() {
+String manualOpenValve()
+{
   manual_valve_target = "OPEN";
   return manual_valve_target;
 };
 
-String manualCLoseValve() {
+String manualCLoseValve()
+{
   manual_valve_target = "CLOSE";
   return manual_valve_target;
 };
@@ -354,6 +404,10 @@ String processor(const String &var)
   else if (var == "MIN_TEMP")
   {
     return get_min_temp();
+  }
+  else if (var == "DATE_TIME")
+  {
+    return showTime();
   }
   return String();
 }
@@ -397,3 +451,50 @@ String readFile(fs::FS &fs, const char *path)
   }
   return fileContent;
 };
+
+String showTime()
+{
+
+  uint8_t hour;
+  uint8_t min;
+  uint8_t sec;
+  uint8_t mday;
+  uint8_t mon;
+  uint16_t year;
+  uint8_t wday;
+  String month;
+  String minute;
+  String dateTime;
+
+  if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday))
+  {
+    dateTime = "Get time failed";
+    Serial.println(dateTime);
+    return dateTime;
+
+  }
+  else
+  {
+    if (mon < 10)
+    {
+      month = "0" + String(mon);
+    }
+    else
+    {
+      month = mon;
+    };
+
+    if (min < 10)
+    {
+      minute = "0" + String(min);
+    }
+    else
+    {
+      minute = String(min);
+    };
+    dateTime = String(hour) + ":" + minute + "  " + String(mday) + "." + month + "." + String(year);
+
+    Serial.println(dateTime);
+    return dateTime;
+  };
+}

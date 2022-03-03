@@ -101,6 +101,7 @@ setInterval(function () {
   xhttp.send();
 }, 20000);
 
+
 setInterval(function () {
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
@@ -113,6 +114,7 @@ setInterval(function () {
   xhttp.send();
 }, 20000);
 
+
 setInterval(function () {
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
@@ -124,6 +126,19 @@ setInterval(function () {
   xhttp.open("GET", "/get_valve_state", true);
   xhttp.send();
 }, 20000);
+
+
+setInterval(function () {
+  let xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      document.querySelector(".clock").innerHTML = this.responseText;
+      console.log('get_datetime')
+    }
+  };
+  xhttp.open("GET", "/get_datetime", true);
+  xhttp.send();
+}, 60000);
 
 
 function submitMinimum() {
