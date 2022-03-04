@@ -157,8 +157,8 @@ void setup()
   {
     Serial.println(F("RTC not found"));
   }
-
-  if (timeClient.getEpochTime() != 21603) // если получено время из интернета
+  Serial.println(timeClient.getEpochTime());
+  if (timeClient.getEpochTime() > 500000) // если получено время из интернета
   {
     if (rtc.getEpoch() != timeClient.getEpochTime()) // если время на часах отличается от NTP
     {
