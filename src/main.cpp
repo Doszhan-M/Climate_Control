@@ -51,12 +51,25 @@ String manual_valve_target = "neutral";
 uint8_t wifiCount = 0;
 bool valve_is_opened = true;
 String valveState = "OPEN";              // статус клапана для отабражения в html
-int max_temp = 26;                       // уставка для макс температуры
-int min_temp = 25;                       // уставка для мин температуры
+uint8_t max_temp;                        // уставка для макс температуры
+uint8_t min_temp;                        // уставка для мин температуры
+uint8_t night_max_temp;                  // чтобы ночью увеличит уставку на 1 градус
+uint8_t night_min_temp;                  // чтобы ночью увеличит уставку на 1 градус
 const char *max_temp_file = "/max.cfg";  // файл для хранения настроек
 const char *min_temp_file = "/min.cfg";  // файл для хранения настроек
 const char *input_max_temp = "max_temp"; // name в html форме
 const char *input_min_temp = "min_temp"; // name в html форме
+
+uint8_t hour;
+uint8_t minut;
+uint8_t sec;
+uint8_t mday;
+uint8_t mon;
+uint16_t year;
+uint8_t wday;
+String month;
+String minute;
+String dateTime;
 
 // объявление функции
 void notFound(AsyncWebServerRequest *request);
@@ -75,6 +88,7 @@ void close_valve();
 String manualOpenValve();
 String manualCLoseValve();
 String showTime();
+void setNightTemperature();
 
 // ------------------------------------------------------------------------------------------------------------------------
 void setup()
@@ -90,7 +104,12 @@ void setup()
   // -------------------------------------------------------------------
 
   // Работа файловой системы -----------------------------------------
-  if (!LittleFS.begin())
+  if (LittleFS.begin())
+  {
+    max_temp = get_max_temp().toInt();
+    min_temp = get_min_temp().toInt();
+  }
+  else
   {
     Serial.println("Error while mounting LittleFS");
     return;
@@ -210,6 +229,9 @@ void setup()
     if (request->hasParam(input_max_temp))
     {
       inputMessage = request->getParam(input_max_temp)->value();
+      if (inputMessage.toInt() <= min_temp) {
+        return;
+      };
       writeFile(LittleFS, max_temp_file, inputMessage.c_str());
       delay(15);
       max_temp = get_max_temp().toInt();
@@ -219,11 +241,15 @@ void setup()
     if (request->hasParam(input_min_temp))
     {
       inputMessage = request->getParam(input_min_temp)->value();
+      if (inputMessage.toInt() >= max_temp) {
+        return;
+      };
       writeFile(LittleFS, min_temp_file, inputMessage.c_str());
       delay(15);
       min_temp = get_min_temp().toInt();
       Serial.println(min_temp);
     }; });
+
   server.onNotFound(notFound);
   server.begin();
 }
@@ -235,6 +261,7 @@ void loop()
   if ((millis() - lastTime) > timerDelay) // вместо delay()
   {
     showTime();
+    setNightTemperature();
 
     if (manual_control == "OFF")
     {
@@ -328,14 +355,16 @@ void notFound(AsyncWebServerRequest *request)
 String get_max_temp()
 {
   String value = readFile(LittleFS, max_temp_file);
-  int max = value.toInt();
+  uint8_t max = value.toInt();
+  night_max_temp = max + 1;
   return String(max);
 };
 
 String get_min_temp()
 {
   String value = readFile(LittleFS, min_temp_file);
-  int min = value.toInt();
+  uint8_t min = value.toInt();
+  night_min_temp = min + 1;
   return String(min);
 };
 
@@ -455,23 +484,11 @@ String readFile(fs::FS &fs, const char *path)
 String showTime()
 {
 
-  uint8_t hour;
-  uint8_t min;
-  uint8_t sec;
-  uint8_t mday;
-  uint8_t mon;
-  uint16_t year;
-  uint8_t wday;
-  String month;
-  String minute;
-  String dateTime;
-
-  if (!rtc.getDateTime(&hour, &min, &sec, &mday, &mon, &year, &wday))
+  if (!rtc.getDateTime(&hour, &minut, &sec, &mday, &mon, &year, &wday))
   {
     dateTime = "Get time failed";
     Serial.println(dateTime);
     return dateTime;
-
   }
   else
   {
@@ -484,17 +501,37 @@ String showTime()
       month = mon;
     };
 
-    if (min < 10)
+    if (minut < 10)
     {
-      minute = "0" + String(min);
+      minute = "0" + String(minut);
     }
     else
     {
-      minute = String(min);
+      minute = String(minut);
     };
     dateTime = String(hour) + ":" + minute + "  " + String(mday) + "." + month + "." + String(year);
 
     Serial.println(dateTime);
     return dateTime;
   };
-}
+};
+
+void setNightTemperature()
+{
+  if (0 < hour && hour < 8)
+  {
+    if (max_temp < night_max_temp)
+    {
+      max_temp = night_max_temp;
+      min_temp = night_min_temp;
+    }
+  }
+  else
+  {
+    if (max_temp == night_max_temp)
+    {
+      max_temp = night_max_temp - 1;
+      min_temp = night_min_temp - 1;
+    }
+  }
+};
