@@ -27,8 +27,8 @@ const char *wifi_ssid = "ASUS_ROUTER";
 const char *wifi_password = "aSus2020";
 
 // настройки точки доступа
-const char *ssid = "actuator";
-const char *password = "64(Me4J6#C!gZfj";
+const char *ssid = "Actuator";
+const char *password = "aSus2020";
 
 // url sonoff
 const char *url = "http://192.168.4.2:8081/zeroconf/switch";
@@ -59,6 +59,8 @@ const char *max_temp_file = "/max.cfg";  // файл для хранения н�
 const char *min_temp_file = "/min.cfg";  // файл для хранения настроек
 const char *input_max_temp = "max_temp"; // name в html форме
 const char *input_min_temp = "min_temp"; // name в html форме
+
+const char *input_ssid = "ssid"; // name в html форме
 
 uint8_t hour;
 uint8_t minut;
@@ -101,6 +103,13 @@ void setup()
   pinMode(DHT_VCC, OUTPUT);    // D6 пин в режиме выхода
   digitalWrite(DHT_VCC, HIGH); // подать напряжение 3,3V на D6 пин
   dht.begin();
+  Serial.println(F("\nInitializing DHT22"));
+  if (dht.getError() != DHT_ERROR_NONE)
+  {
+    Serial.print("Error: ");
+    Serial.println(dht.getErrorString());
+    return;
+  }
   // -------------------------------------------------------------------
 
   // Работа файловой системы -----------------------------------------
@@ -157,7 +166,6 @@ void setup()
   {
     Serial.println(F("RTC not found"));
   }
-  Serial.println(timeClient.getEpochTime());
   if (timeClient.getEpochTime() > 500000) // если получено время из интернета
   {
     if (rtc.getEpoch() != timeClient.getEpochTime()) // если время на часах отличается от NTP
@@ -250,6 +258,27 @@ void setup()
       Serial.println(min_temp);
     }; });
 
+
+  server.on("/wifi_settings", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+      String inputMessage;
+
+      if (request->hasParam(input_ssid))
+      {
+        inputMessage = request->getParam(input_ssid)->value();
+        Serial.println(inputMessage);
+      };
+
+      if (request->hasParam("password"))
+      {
+        inputMessage = request->getParam("password")->value();
+        Serial.println(inputMessage);
+      };
+
+      request->send_P(200, "text/plain", "WiFi settings accepted!"); 
+ 
+  });
+
   server.onNotFound(notFound);
   server.begin();
 }
@@ -292,17 +321,17 @@ void loop()
         close_valve();
       }
     };
-
     lastTime = millis();
-  }
+  };
 }
 
 // ------------------------------------------------------------------------------------------------------------------------
 
-// функции управления реле
+// Функции управления реле
+
+// Отправить запрос на включение реле
 void close_valve()
 {
-  // отправить запрос на включение реле
   restclient.addHeader("Content-Type", "application/json");                           // header
   String RequestData = "{\"deviceid\":\"1000b91ec6\",\"data\":{\"switch\": \"on\"}}"; // payload
   int ResponseStatusCode = restclient.POST(RequestData);                              // post запрос
@@ -325,9 +354,9 @@ void close_valve()
   }
 };
 
+// Отправить запрос на выключение реле
 void open_valve()
 {
-  // отправить запрос на выключение реле
   restclient.addHeader("Content-Type", "application/json");                            // header
   String RequestData = "{\"deviceid\":\"1000b91ec6\",\"data\":{\"switch\": \"off\"}}"; // payload
   int ResponseStatusCode = restclient.POST(RequestData);                               // post запрос
@@ -412,6 +441,7 @@ String manualCLoseValve()
   return manual_valve_target;
 };
 
+// Подставить требуемые значения в html
 String processor(const String &var)
 {
   if (var == "STATE")
@@ -442,7 +472,7 @@ String processor(const String &var)
 }
 // -----------------------------------------
 
-// записать настройки в пзу память
+// Записать настройки в пзу память
 void writeFile(fs::FS &fs, const char *path, const char *message)
 {
   Serial.printf("Writing file: %s\r\n", path);
@@ -462,7 +492,7 @@ void writeFile(fs::FS &fs, const char *path, const char *message)
   }
 };
 
-// считать настройки из пзу
+// Считать настройки из пзу
 String readFile(fs::FS &fs, const char *path)
 {
   Serial.printf("Reading file: %s\r\n", path);
@@ -481,9 +511,9 @@ String readFile(fs::FS &fs, const char *path)
   return fileContent;
 };
 
+// Получить текущее время из часов
 String showTime()
 {
-
   if (!rtc.getDateTime(&hour, &minut, &sec, &mday, &mon, &year, &wday))
   {
     dateTime = "Get time failed";
@@ -510,12 +540,11 @@ String showTime()
       minute = String(minut);
     };
     dateTime = String(hour) + ":" + minute + "  " + String(mday) + "." + month + "." + String(year);
-
-    Serial.println(dateTime);
     return dateTime;
   };
 };
 
+// Ночью до 8 утра поднять на 1 градус
 void setNightTemperature()
 {
   if (0 < hour && hour < 8)
