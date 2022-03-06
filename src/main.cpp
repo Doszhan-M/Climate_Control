@@ -20,11 +20,11 @@
 
 //настройки таймера задержки
 unsigned long lastTime = 0;
-unsigned long timerDelay = 10000; // 5 seconds (10000)
+unsigned long timerDelay = 20000;         // 10 seconds (10000)
 
 // Конфигурация WIFI подключения
-const char *wifi_ssid = "ASUS_ROUTER";
-const char *wifi_password = "aSus2020";
+String wifi_ssid;
+String wifi_password;
 
 // настройки точки доступа
 const char *ssid = "Actuator";
@@ -60,7 +60,11 @@ const char *min_temp_file = "/min.cfg";  // файл для хранения н�
 const char *input_max_temp = "max_temp"; // name в html форме
 const char *input_min_temp = "min_temp"; // name в html форме
 
-const char *input_ssid = "ssid"; // name в html форме
+const char *input_ssid = "ssid";                // query параметр
+const char *wifi_ssid_file = "/wifi_ssid.cfg";  // файл для хранения настроек
+const char *input_password = "password";        // query параметр
+const char *wifi_pass_file = "/wifi_pass.cfg";  // файл для хранения настроек
+
 
 uint8_t hour;
 uint8_t minut;
@@ -83,6 +87,8 @@ String manualControlOff();
 String processor(const String &var);
 String get_max_temp();
 String get_min_temp();
+String get_wifi_ssid();
+String get_wifi_pass();
 String readFile(fs::FS &fs, const char *path);
 void writeFile(fs::FS &fs, const char *path, const char *message);
 void open_valve();
@@ -97,6 +103,7 @@ void setup()
 {
 
   Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
 
   // Старт датчика DHT22 ----------------------------------------------
   pinMode(DHT_PIN, INPUT);     // D5 пин в режиме входа
@@ -117,6 +124,8 @@ void setup()
   {
     max_temp = get_max_temp().toInt();
     min_temp = get_min_temp().toInt();
+    wifi_ssid = get_wifi_ssid();
+    wifi_password = get_wifi_pass();
   }
   else
   {
@@ -266,17 +275,21 @@ void setup()
       if (request->hasParam(input_ssid))
       {
         inputMessage = request->getParam(input_ssid)->value();
-        Serial.println(inputMessage);
+        writeFile(LittleFS, wifi_ssid_file, inputMessage.c_str());
+        delay(15);
+        wifi_ssid = get_wifi_ssid();
+        Serial.println(wifi_ssid);
       };
 
       if (request->hasParam("password"))
       {
         inputMessage = request->getParam("password")->value();
-        Serial.println(inputMessage);
+        writeFile(LittleFS, wifi_pass_file, inputMessage.c_str());
+        delay(15);
+        wifi_password = get_wifi_pass();
+        Serial.println(wifi_password);
       };
-
-      request->send_P(200, "text/plain", "WiFi settings accepted!"); 
- 
+      request->send_P(200, "text/plain", "WiFi settings accepted!");  
   });
 
   server.onNotFound(notFound);
@@ -321,6 +334,7 @@ void loop()
         close_valve();
       }
     };
+
     lastTime = millis();
   };
 }
@@ -344,6 +358,7 @@ void close_valve()
      ответил и выполнил задание, поэтому сразу valve_is_opened можно менять */
     valve_is_opened = false;
     valveState = "CLOSED";
+    digitalWrite(LED_BUILTIN, LOW);   // включить светодиод
     String payload = restclient.getString();
     Serial.println(payload);
   }
@@ -367,6 +382,7 @@ void open_valve()
     Serial.println("Valve has been opened");
     valve_is_opened = true;
     valveState = "OPEN";
+    digitalWrite(LED_BUILTIN, HIGH);  // выключить светодиод
   }
   else
   {
@@ -395,6 +411,18 @@ String get_min_temp()
   uint8_t min = value.toInt();
   night_min_temp = min + 1;
   return String(min);
+};
+
+String get_wifi_ssid()
+{
+  String value = readFile(LittleFS, wifi_ssid_file);
+  return value;
+};
+
+String get_wifi_pass()
+{
+  String value = readFile(LittleFS, wifi_pass_file);
+  return value;
 };
 
 String getTemperature()

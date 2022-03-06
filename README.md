@@ -1,0 +1,1 @@
+http://192.168.1.155/wifi_settings?ssid=ASUS_ROUTER&password=aSus2020
