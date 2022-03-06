@@ -27,8 +27,8 @@ String wifi_ssid;
 String wifi_password;
 
 // настройки точки доступа
-const char *ssid = "test";
-const char *password = "test";
+const char *ssid = "Actuator";
+const char *password = "Actuator";
 
 // url sonoff
 const char *url = "http://192.168.4.2:8081/zeroconf/switch";
