@@ -26,39 +26,42 @@ unsigned long timerDelay = 20000;         // 10 seconds (10000)
 String wifi_ssid;
 String wifi_password;
 
-// настройки точки доступа
-const char *ssid = "Actuator";
-const char *password = "aSus2020";
+// настройки точки доступа 
+const char *ssid = "wifitest";
+const char *password = "wifitest";
 
 // url sonoff
 const char *url = "http://192.168.4.2:8081/zeroconf/switch";
 
-// ----------------------- ПИНЫ ---------------------------
-#define DHT_VCC D6 // питание датчика DHT22
-#define DHT_PIN D5 // дата линия датчика DHT22
+// ----------------------- ПИНЫ --------------------------------------------------------------------
+#define DHT_VCC D6                              // питание датчика DHT22
+#define DHT_PIN D5                              // дата пин датчика DHT22
+#define CLOSE_PIN D3                            // пин кнопки для закрытия клапана
+#define OPEN_PIN D7                             // пин кнопки для открытия клапана
 
-DHT dht(DHT_PIN, DHT_MODEL_DHT22); // обьявляем объект класса dht
-WiFiClient client;                 // объявить объект класса wifi
-AsyncWebServer server(80);         // объявить объект класса http сервера
-HTTPClient restclient;             // объявить объект класса rest клиента
-ErriezDS1307 rtc;                  // объявить объект класса rtc времени
-WiFiUDP ntpUDP;                    // объявить объект класса ntp клиента
+// Классы ------------------------------------------------------------------------------------------
+DHT dht(DHT_PIN, DHT_MODEL_DHT22);              // обьявляем объект класса dht
+WiFiClient client;                              // объявить объект класса wifi
+AsyncWebServer server(80);                      // объявить объект класса http сервера
+HTTPClient restclient;                          // объявить объект класса rest клиента
+ErriezDS1307 rtc;                               // объявить объект класса rtc времени
+WiFiUDP ntpUDP;                                 // объявить объект класса ntp клиента
 NTPClient timeClient(ntpUDP);
 
-// Переменные
+// Переменные --------------------------------------------------------------------------------------
 String manual_control = "OFF";
 String manual_valve_target = "neutral";
 uint8_t wifiCount = 0;
 bool valve_is_opened = true;
-String valveState = "OPEN";              // статус клапана для отабражения в html
-uint8_t max_temp;                        // уставка для макс температуры
-uint8_t min_temp;                        // уставка для мин температуры
-uint8_t night_max_temp;                  // чтобы ночью увеличит уставку на 1 градус
-uint8_t night_min_temp;                  // чтобы ночью увеличит уставку на 1 градус
-const char *max_temp_file = "/max.cfg";  // файл для хранения настроек
-const char *min_temp_file = "/min.cfg";  // файл для хранения настроек
-const char *input_max_temp = "max_temp"; // name в html форме
-const char *input_min_temp = "min_temp"; // name в html форме
+String valveState = "OPEN";                     // статус клапана для отабражения в html
+uint8_t max_temp;                               // уставка для макс температуры
+uint8_t min_temp;                               // уставка для мин температуры
+uint8_t night_max_temp;                         // чтобы ночью увеличит уставку на 1 градус
+uint8_t night_min_temp;                         // чтобы ночью увеличит уставку на 1 градус
+const char *max_temp_file = "/max.cfg";         // файл для хранения настроек
+const char *min_temp_file = "/min.cfg";         // файл для хранения настроек
+const char *input_max_temp = "max_temp";        // name в html форме
+const char *input_min_temp = "min_temp";        // name в html форме
 
 const char *input_ssid = "ssid";                // query параметр
 const char *wifi_ssid_file = "/wifi_ssid.cfg";  // файл для хранения настроек
@@ -77,7 +80,7 @@ String month;
 String minute;
 String dateTime;
 
-// объявление функции
+// Объявление функции ---------------------------------------------------------------------------------
 void notFound(AsyncWebServerRequest *request);
 String getTemperature();
 String getHumidity();
@@ -97,13 +100,17 @@ String manualOpenValve();
 String manualCLoseValve();
 String showTime();
 void setNightTemperature();
-
 // ------------------------------------------------------------------------------------------------------------------------
+
 void setup()
 {
 
   Serial.begin(115200);
+
+  // Определить пины --------------------------------------------------
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(CLOSE_PIN, INPUT_PULLUP);
+  pinMode(OPEN_PIN, INPUT_PULLUP);
 
   // Старт датчика DHT22 ----------------------------------------------
   pinMode(DHT_PIN, INPUT);     // D5 пин в режиме входа
@@ -185,21 +192,21 @@ void setup()
       };
     }
   }
-  // -------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------
 
-  // Точка доступа для sonoff --------------------------------------------
+  // Точка доступа для sonoff ------------------------------------------------------------------
   WiFi.softAP(ssid, password);     // WiFi.softAP используется для запуска режима AP NodeMCU.
   Serial.print("Access Point:");   // Выводим информацию через последовательный монитор
   Serial.println(ssid);            // Сообщаем пользователю имя WiFi, установленное NodeMCU
   Serial.print("IP-адрес:");       // И IP-адрес NodeMCU
   Serial.println(WiFi.softAPIP()); // IP-адрес NodeMCU можно получить, вызвав WiFi.softAPIP ()
-  // -------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------
 
-  // Инициализация http клиента ----------------------------------------
+  // Инициализация http клиента -----------------------------------------------------------------
   restclient.begin(client, url);
-  // -------------------------------------------------------------------
+  // --------------------------------------------------------------------------------------------
 
-  // Эндпойнты web сервера ----------------------------------------------
+  // Эндпойнты web сервера ----------------------------------------------------------------------
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send(LittleFS, "/index.html", String(), false, processor); });
 
@@ -295,19 +302,49 @@ void setup()
   server.onNotFound(notFound);
   server.begin();
 }
-// ------------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------
 
 void loop()
 {
 
-  if ((millis() - lastTime) > timerDelay) // вместо delay()
+
+
+
+
+
+
+
+  if ((millis() - lastTime) > timerDelay)                     // вместо delay()
   {
+
+    // управление физической кнопкой -----------------------------------------
+    boolean btn_close = !digitalRead(CLOSE_PIN);
+    boolean btn_open = !digitalRead(OPEN_PIN);
+
+    if (btn_close) {
+      manual_control = "ON";
+      manual_valve_target = "CLOSE";
+    }
+    else {
+      manual_control = "OFF";
+    };
+
+    if (btn_open) {
+      manual_control = "ON";
+      manual_valve_target = "OPEN";
+    }
+    else {
+      manual_control = "OFF";
+    };
+    // ----------------------------------------------------------------------
+
     showTime();
     setNightTemperature();
 
+    // Авто управление  -----------------------------------------------------
     if (manual_control == "OFF")
     {
-      float temperature = dht.readTemperature(); // считать температуру
+      float temperature = dht.readTemperature();              // считать температуру
       Serial.print("Temperature: ");
       Serial.println(temperature);
 
@@ -321,6 +358,7 @@ void loop()
         open_valve();
       };
     }
+    // ручное управление --------- ------------------------------------------
     else
     {
       Serial.println("manual_control on");
@@ -339,7 +377,7 @@ void loop()
   };
 }
 
-// ------------------------------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
 
 // Функции управления реле
 
@@ -391,7 +429,7 @@ void open_valve()
   }
 };
 
-// Функции для http сервера ----------------
+// Функции для http сервера -----------------------------------
 void notFound(AsyncWebServerRequest *request)
 {
   request->send(404, "text/plain", "Not found");
@@ -500,7 +538,7 @@ String processor(const String &var)
 }
 // -----------------------------------------
 
-// Записать настройки в пзу память
+// Записать настройки в пзу память ------------------------------------------
 void writeFile(fs::FS &fs, const char *path, const char *message)
 {
   Serial.printf("Writing file: %s\r\n", path);
@@ -539,7 +577,7 @@ String readFile(fs::FS &fs, const char *path)
   return fileContent;
 };
 
-// Получить текущее время из часов
+// Получить текущее время из часов ----------------------------------------------
 String showTime()
 {
   if (!rtc.getDateTime(&hour, &minut, &sec, &mday, &mon, &year, &wday))
@@ -572,7 +610,7 @@ String showTime()
   };
 };
 
-// Ночью до 8 утра поднять на 1 градус
+// Ночью до 8 утра поднять уставку на 1 градус
 void setNightTemperature()
 {
   if (0 < hour && hour < 8)
