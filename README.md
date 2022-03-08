@@ -1,5 +1,5 @@
 # Home Climate Control
-![picture](https://doszhan-m.github.io/storage/home_climate_control.png)
+![picture](https://doszhan-m.github.io/img/home_climate_control.png)
 
 ## Приложение для управления температурой в квартире на модуле esp8266 NodeMCU V3
 
@@ -17,3 +17,6 @@
 Чтобы изменить настройки для подключения wifi, можно отправить запрос по адресу:
 http://your_local_ip/wifi_settings?ssid=TestWifi&password=SecretPass\
 где, TestWifi название точки доступа, SecretPass - пароль
+
+## Схема подключения:
+![picture](https://doszhan-m.github.io/img/home_climate_schema.png)

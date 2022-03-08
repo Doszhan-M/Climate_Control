@@ -18,6 +18,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
+
 //настройки таймера задержки
 unsigned long lastTime = 0;
 unsigned long timerDelay = 20000;         // 10 seconds (10000)
@@ -27,8 +28,8 @@ String wifi_ssid;
 String wifi_password;
 
 // настройки точки доступа 
-const char *ssid = "wifitest";
-const char *password = "wifitest";
+const char *ssid = "Actuator";
+const char *password = "testwifi";
 
 // url sonoff
 const char *url = "http://192.168.4.2:8081/zeroconf/switch";
@@ -306,14 +307,6 @@ void setup()
 
 void loop()
 {
-
-
-
-
-
-
-
-
   if ((millis() - lastTime) > timerDelay)                     // вместо delay()
   {
 
@@ -610,7 +603,7 @@ String showTime()
   };
 };
 
-// Ночью до 8 утра поднять уставку на 1 градус
+// Ночью до 8 утра поднять уставку на 1 градус --------------------------------------
 void setNightTemperature()
 {
   if (0 < hour && hour < 8)
