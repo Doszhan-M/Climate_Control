@@ -29,7 +29,7 @@ String wifi_password;
 
 // настройки точки доступа 
 const char *ssid = "Actuator";
-const char *password = "testwifi";
+const char *password = "aSus2020";
 
 // url sonoff
 const char *url = "http://192.168.4.2:8081/zeroconf/switch";
@@ -41,7 +41,7 @@ const char *url = "http://192.168.4.2:8081/zeroconf/switch";
 #define OPEN_PIN D7                             // пин кнопки для открытия клапана
 
 // Классы ------------------------------------------------------------------------------------------
-DHT dht(DHT_PIN, DHT_MODEL_DHT22);              // обьявляем объект класса dht
+DHT dht(DHT_PIN, DHT_MODEL_DHT22);              // объявить объект класса dht
 WiFiClient client;                              // объявить объект класса wifi
 AsyncWebServer server(80);                      // объявить объект класса http сервера
 HTTPClient restclient;                          // объявить объект класса rest клиента
@@ -54,7 +54,7 @@ String manual_control = "OFF";
 String manual_valve_target = "neutral";
 uint8_t wifiCount = 0;
 bool valve_is_opened = true;
-String valveState = "OPEN";                     // статус клапана для отабражения в html
+String valveState = "OPEN";                     // статус клапана для отображения в html
 uint8_t max_temp;                               // уставка для макс температуры
 uint8_t min_temp;                               // уставка для мин температуры
 uint8_t night_max_temp;                         // чтобы ночью увеличит уставку на 1 градус
@@ -114,9 +114,9 @@ void setup()
   pinMode(OPEN_PIN, INPUT_PULLUP);
 
   // Старт датчика DHT22 ----------------------------------------------
-  pinMode(DHT_PIN, INPUT);     // D5 пин в режиме входа
-  pinMode(DHT_VCC, OUTPUT);    // D6 пин в режиме выхода
-  digitalWrite(DHT_VCC, HIGH); // подать напряжение 3,3V на D6 пин
+  pinMode(DHT_PIN, INPUT);                                  // D5 пин в режиме входа
+  pinMode(DHT_VCC, OUTPUT);                                 // D6 пин в режиме выхода
+  digitalWrite(DHT_VCC, HIGH);                              // подать напряжение 3,3V на D6 пин
   dht.begin();
   Serial.println(F("\nInitializing DHT22"));
   if (dht.getError() != DHT_ERROR_NONE)
@@ -183,11 +183,11 @@ void setup()
   {
     Serial.println(F("RTC not found"));
   }
-  if (timeClient.getEpochTime() > 500000) // если получено время из интернета
+  if (timeClient.getEpochTime() > 500000)                   // если получено время из интернета
   {
-    if (rtc.getEpoch() != timeClient.getEpochTime()) // если время на часах отличается от NTP
+    if (rtc.getEpoch() != timeClient.getEpochTime())        // если время на часах отличается от NTP
     {
-      if (!rtc.setEpoch(timeClient.getEpochTime())) // установить время из NTP клиента
+      if (!rtc.setEpoch(timeClient.getEpochTime()))          // установить время из NTP клиента
       {
         Serial.println(F("Error: RTC write failed"));
       };

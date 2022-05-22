@@ -4,8 +4,12 @@
    "cSpell.ignoreWords": [
        "ssid",
        "deviceid",
+       "restclient",
        "xhttp",
        "minut",
+       "sonoff",
+       "APIP",
+       "millis",
        "ASUS",
 
    ],
