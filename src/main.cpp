@@ -29,7 +29,7 @@ String wifi_password;
 
 // настройки точки доступа 
 const char *ssid = "Actuator";
-const char *password = "password";
+const char *password = "aSus2020";
 
 // url sonoff
 const char *url = "http://192.168.4.2:8081/zeroconf/switch";
