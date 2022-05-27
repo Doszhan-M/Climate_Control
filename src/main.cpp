@@ -317,18 +317,20 @@ void loop()
     if (btn_close) {
       manual_control = "ON";
       manual_valve_target = "CLOSE";
+      Serial.print("btn_close: ");
+      Serial.println(btn_close);
+    }
+    else if (btn_open) {
+      manual_control = "ON";
+      manual_valve_target = "OPEN";
+      Serial.print("btn_open: ");
+      Serial.println(btn_open);
     }
     else {
       manual_control = "OFF";
     };
 
-    if (btn_open) {
-      manual_control = "ON";
-      manual_valve_target = "OPEN";
-    }
-    else {
-      manual_control = "OFF";
-    };
+
     // ----------------------------------------------------------------------
 
     showTime();

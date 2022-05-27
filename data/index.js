@@ -1,95 +1,37 @@
-const manualToggle = () => {
+let manualControlFlag = true
 
-  let menuToggle = document.querySelector('.manual_control');
-  menuToggle.onclick = function () {
+const getControlState = () => {
 
+    let menuToggle = document.querySelector('.manual_control');
     let xhttp = new XMLHttpRequest();
+
     xhttp.onreadystatechange = function () {
       if (this.readyState == 4 && this.status == 200) {
-        console.log(this.responseText);
-
-        if (this.responseText == "OFF") {
-          menuToggle.classList.add('manual_control_on');
-          fetch('/manual_control_on')
-        };
+        console.log('get_control_state');
 
         if (this.responseText == "ON") {
+          menuToggle.classList.add('manual_control_on');
+          fetch('/manual_control_on')
+          if (manualControlFlag) {
+            manualControlFlag = false
+            alert('Manual control active!')
+          }
+        };
+
+        if (this.responseText == "OFF") {
           menuToggle.classList.remove('manual_control_on');
+          manualControlFlag = true
           fetch('/manual_control_off')
         };
       };
     };
     xhttp.open("GET", "/manual_control_state", true);
     xhttp.send();
-  }
-}
-
-const manualOn = () => {
-  let xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 200) {
-      console.log(this.responseText);
-      let menuToggle = document.querySelector('.manual_control');
-      if (this.responseText == "ON") {
-        menuToggle.classList.add('manual_control_on');
-        alert("Manual control active!");
-      }
-    };
   };
-  xhttp.open("GET", "/manual_control_state", true);
-  xhttp.send();
-};
-
-const openValve = () => {
-  let menuToggle = document.querySelector('.manual_control');
-  let openBtn = document.querySelector('.on_btn');
-  let valveState = document.getElementById('state');
-
-  openBtn.onclick = function () {
-    if (menuToggle.classList.contains('manual_control_on')) {
-      valveState.innerHTML = "IN PROGRESS";
-
-      let xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          console.log(this.responseText);
-        };
-      };
-      xhttp.open("GET", "/open_valve", true);
-      xhttp.send();
-    }
-
-  };
-};
-
-const closeValve = () => {
-  let menuToggle = document.querySelector('.manual_control');
-  let openBtn = document.querySelector('.off_btn');
-  let valveState = document.getElementById('state');
-
-  openBtn.onclick = function () {
-    if (menuToggle.classList.contains('manual_control_on')) {
-      valveState.innerHTML = "IN PROGRESS";
-
-      let xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-          console.log(this.responseText);
-        };
-      };
-      xhttp.open("GET", "/close_valve", true);
-      xhttp.send();
-    }
-  };
-};
-
-openValve();
-closeValve();
-manualOn();
-manualToggle();
 
 
-setInterval(function () {
+const getTemperature = () => {
+
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -99,10 +41,11 @@ setInterval(function () {
   };
   xhttp.open("GET", "/get_temperature", true);
   xhttp.send();
-}, 20000);
+};
 
 
-setInterval(function () {
+const getHumidity = () => {
+
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -112,10 +55,12 @@ setInterval(function () {
   };
   xhttp.open("GET", "/get_humidity", true);
   xhttp.send();
-}, 20000);
+};
 
 
-setInterval(function () {
+
+const getValve_state = () => {
+
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -125,10 +70,11 @@ setInterval(function () {
   };
   xhttp.open("GET", "/get_valve_state", true);
   xhttp.send();
-}, 20000);
+};
 
 
-setInterval(function () {
+const getDatetime = () => {
+
   let xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -138,6 +84,23 @@ setInterval(function () {
   };
   xhttp.open("GET", "/get_datetime", true);
   xhttp.send();
+};
+
+getControlState()
+getTemperature()
+getHumidity()
+getValve_state()
+getDatetime()
+
+setInterval(function () {
+  getControlState()
+  getTemperature()
+  getHumidity()
+  getValve_state()
+}, 10000);
+
+setInterval(function () {
+  getDatetime()
 }, 60000);
 
 
@@ -149,3 +112,52 @@ function submitMaximum() {
   alert("Maximum value saved");
   setTimeout(function () { document.location.reload(false); }, 500);
 };
+
+
+
+// deprecated:
+// const openValve = () => {
+//   let menuToggle = document.querySelector('.manual_control');
+//   let openBtn = document.querySelector('.on_btn');
+//   let valveState = document.getElementById('state');
+
+//   openBtn.onclick = function () {
+//     if (menuToggle.classList.contains('manual_control_on')) {
+//       valveState.innerHTML = "IN PROGRESS";
+
+//       let xhttp = new XMLHttpRequest();
+//       xhttp.onreadystatechange = function () {
+//         if (this.readyState == 4 && this.status == 200) {
+//           console.log(this.responseText);
+//         };
+//       };
+//       xhttp.open("GET", "/open_valve", true);
+//       xhttp.send();
+//     }
+
+//   };
+// };
+
+// const closeValve = () => {
+//   let menuToggle = document.querySelector('.manual_control');
+//   let openBtn = document.querySelector('.off_btn');
+//   let valveState = document.getElementById('state');
+
+//   openBtn.onclick = function () {
+//     if (menuToggle.classList.contains('manual_control_on')) {
+//       valveState.innerHTML = "IN PROGRESS";
+
+//       let xhttp = new XMLHttpRequest();
+//       xhttp.onreadystatechange = function () {
+//         if (this.readyState == 4 && this.status == 200) {
+//           console.log(this.responseText);
+//         };
+//       };
+//       xhttp.open("GET", "/close_valve", true);
+//       xhttp.send();
+//     }
+//   };
+// };
+
+// openValve();
+// closeValve();
